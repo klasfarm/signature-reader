@@ -8,9 +8,10 @@ colorlinks: true
 geometry: margin=1.5cm
 output: pdf_document
 ---
+
 ## Opis postupu
 
-- V rámci __mailovej správy__ je zaslaná už __vygenerovaná vizitka__, ktorú je potrebné celú označiť a následne vložiť do prostredia __Outlook__ (sekcia __podpisy/upraviť podpis__, viď nižšie) pomocou nižšie uvedeného postupu. Nakoľko obsah správy je len samotná vizitka, možno použiť skratku na označenie celého obsahu správy, t. j. `Control` + `A` pre __Windows__ a `Command` + `A` pre __macOS__.
+- V rámci hore uvedenej __mailovej správy__ je zaslaná už __vygenerovaná vizitka__, ktorú je potrebné celú označiť, skopírovať a následne vložiť do prostredia __Outlook__ (sekcia __podpisy e-mailu/upraviť podpis__, viď nižšie) pomocou nižšie uvedeného postupu. Užívateľ štandardne označí vizitku kurzorom myši, klikne na tlačidlo __kopírovať__ (alebo skratka `Ctrl+C`) a následne vloží kliknutím na tlačidlo __vložiť__ (alebo skratka `Ctrl+V`).
 
 - V prípade __technických otázok__ alebo pomoci môžete kontaktovať priamo správcu [tu](mailto:michal.spano03@gmail.com).
 
