@@ -141,7 +141,7 @@ keys. The original structure of the data is preserved - list of dicts.
 ------------------------------------------------------------------------------
 '''
 
-def format_data(sh) -> dict:
+def format_data(sh) -> list:
     buff: list = []
     for row in sh.get_all_records():
         temp: dict = {}
