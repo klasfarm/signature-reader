@@ -39,7 +39,7 @@ def main():
     start_time: dt = dt.now() 
 
     # remove all files in the output directory
-    system(f'sudo rm {OUT_PATH}/*') 
+    system(f'sudo rm {OUT_PATH}/*')
 
     '''
     --------------------------------------------------------------------------
@@ -63,6 +63,7 @@ def main():
     --------------------------------------------------------------------------
     '''
 
+    EXCLUDE_PEOPLE: Dict[str, str] = {}
     for person in data:
         file_name: str = person['name'].strip().replace(' ', '-').lower() + '.html'
 
@@ -71,67 +72,104 @@ def main():
             
             '''
             ----------------------------------------------------------------------
-            Here we replace the 'NAME' placeholder with the actual data:
-            `Title. Name SURNAME`
+            Here we replace the 'NAME' placeholder with the actual data: 
+            `Title. Name SURNAME additional_info`, therefore permitting the lenghts 
+            of the list to be 2 or 3, that shall be parsed accordingly.
             Furthermore, some people may not have an academic title, so we check if
-            the value is \'null\' literal. If it is, we replace the placeholder with
-            an empty string.
+            the value is an empty string. If it is, we replace the placeholder with
+            an empty string removing the template line.     
             ------------------------------------------------------------------------
-            The job position, company name, phone, e-mail are parsed without
-            any extra modifications.
+            We parse the e-mail address. We try to check if the e-mail address is 
+            valid. If not, we raise an exception and abandon the execution. Otherwise,
+            we insert the actual value. If a dash character is present, we replace it
+            with an empty string only. We'll remove the output file of the person with 
+            no e-mail address later in the execution. Meanwhile, we store it in a buffer
+            called EXCLUDE_PEOPLE.
             ------------------------------------------------------------------------
-            The city, street parameters are parsed with the following rules:
-            The value may be an empty string or a dash character, which will indicate
-            an empty value. For that, we use the try/except block. If the exception 
-            is not raised, we replace the placeholder with the value in the desired 
-            format.
+            For the phone number, we don't parse given a dash character '-' as the 
+            value. If so, we insert an empty string. Otherwise, we insert the actual
+            value with the pipe character '|' as a separator and a <br> HTML new line.
             ------------------------------------------------------------------------
-            Lastly, we write each line to the output files with the names computed.
+            The city, street parameters are parsed with the following rules: the 
+            street may not be in the desired format - for that, we use the try/except 
+            block. If the exception is not raised, we replace the placeholder with 
+            the value in the desired format, otherwise an empty string. We split the 
+            string by the comma, and then we take the first element of the list as 
+            the street and the second element as the city.
+            ------------------------------------------------------------------------
+            The position, company are parsed without any specialised rules. Lastly, 
+            we write each line to the output files with the names computed.
             ------------------------------------------------------------------------
             '''
 
             if t_line == '#NAME':
                 raw_name: str = person['name'].strip().split(' ')
                 academic_title: str = person['academic_title'].strip()
+                title: str = academic_title if academic_title != '' else ''
 
-                title: str = ''
-                if academic_title != 'null':
-                    title = academic_title + ' '
+                if len(raw_name) == 2:
+                    t_line = f'{title} {raw_name[0]} {raw_name[-1].upper()} '
 
-                t_line = f'{title}{raw_name[0]} {raw_name[-1].upper()}'
-            
-            elif t_line == '#POSITION':
-                t_line = person['position']
-
-            elif t_line == '#COMPANY':
-                t_line = person['company']
-
-            elif t_line == '#PHONE':
-                t_line = person['phone']
+                elif len(raw_name) == 3:
+                    t_line = f'{title} {raw_name[0]} {raw_name[1].upper()} {raw_name[-1]}'
+                else:
+                    raise Exception(f"{' '.join(raw_name)} is not a valid name format"
+                                    f"Supported formats:\n\'Name Surname\'\n\'Name SURNAME additional_info\'")
 
             elif t_line == '#E-MAIL':
+                if '@' not in person['email'] or person['email'].count('@') != 1:
+                    if person['email'] != '-':
+                        raise Exception(f"'{person['email']}' is not a valid e-mail")
+                    else:
+                        EXCLUDE_PEOPLE[file_name] = person['name']
                 t_line = person['email']
+
+            elif '#PHONE' in t_line.split(' '):
+                if person['phone'] == '-':
+                    t_line = ''
+                t_line = f"m | {person['phone']} <br>"
 
             elif t_line == '#STREET':
                 try:
                     t_line = person['street'].split(',')[0].strip()
                 except IndexError:
                     t_line = ''
+
             elif t_line == '#CITY':
                 try:
                     t_line = person['street'].split(',')[1].strip()
                 except IndexError:
                     t_line = ''
 
+            elif t_line == '#POSITION':
+                t_line = person['position']
+
+            elif t_line == '#COMPANY':
+                t_line = person['company']
+
             with open(f'{OUT_PATH}/{file_name}', 'a') as f:
                 f.write(t_line + '\n')
+    
+    '''
+    ------------------------------------------------------------------------
+    Here we remove the output files of the people that have no e-mail address.
+    Moreover, we check additinal flags: 
+    - if the flag '--debug | -d' is present, we print the time of the execution.
+    - if the flag '--exclude | -e' is present, we print the names of the excluded
+    people.
+    ------------------------------------------------------------------------
+    '''
 
-    # Debug flag [optional]
-    if '--debug' in argv or '-d' in argv:
-        print(f'The execution took: '
-            f'{round((dt.now() - start_time).total_seconds(), 2)} '
-            f'seconds.\nInvoked by: \t\'--debug | -d\'')
+    for excluded_file in EXCLUDE_PEOPLE.keys():
+        system(f'rm {OUT_PATH}/{excluded_file}')
 
+    for flag in argv:
+        if flag == '--debug' or flag == '-d':
+            print(f'The execution took: '
+                f'{round((dt.now() - start_time).total_seconds(), 2)} '
+                f'seconds.\nInvoked by: \t\'--debug | -d\'')
+        elif flag == '--exclude' or flag == '-e':
+            print(f"Excluded: {' '.join(EXCLUDE_PEOPLE.values())}")
 
 '''
 ------------------------------------------------------------------------------
